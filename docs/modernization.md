@@ -29,12 +29,31 @@
   use them. Making them private requires moving those implementations separately.
 - Preserve poker behavior and dependency versions.
 
+## Step 3a: Standard-library combinatorics and integer text (implemented)
+
+- Replace Boost.Math binomial calculation and its floating-point/size_t round
+  trip with a checked `uint64_t` recurrence using `std::gcd` cancellation.
+- `choose(int, int)` now returns `std::uint64_t` rather than `double`. Existing
+  callers can still convert to double, but callers depending on the exact return
+  type (for example function pointers) must update. Colex counts avoid the
+  floating-point round trip. The public Colex API still returns size_t; only the
+  binomial calculation is independent of its width.
+- Impossible selections (`k > n`) still return zero. Negative inputs throw
+  `std::invalid_argument`; counts beyond uint64_t throw `std::overflow_error`.
+- Replace integer lexical_cast usage in combinations, partition diagnostics,
+  and UniversalHandEvaluator diagnostics with `std::to_string`. Preserve text
+  spacing and existing error messages. Remove unused Boost includes in CardSet.
+- Replace assertion-free timing loops with known counts, an independent Pascal
+  triangle reference, overflow tests, text checks, and Colex regression tests.
+- Boost remains required for other public/core parsing and floating-point text,
+  and for CLI Program_options. No speedup is claimed for this change.
+
 ## Next steps
 
 These are separate changes, not prerequisites for using the C++20 build:
 
-1. Remove remaining Boost utilities incrementally. Use exact integer
-   combinatorics, checked standard numeric parsing, and compatible formatting.
+1. Remove remaining Boost utilities incrementally. Next address checked standard
+   numeric parsing and compatible formatting; exact integer combinatorics is implemented.
    Keep CLI parsing and tests independently scoped. Verify parsing and output
    semantics before replacing them.
 2. Fix upstream correctness issues in separate tested changes: split-pot tie

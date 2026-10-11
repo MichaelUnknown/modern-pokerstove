@@ -138,3 +138,23 @@ TEST(CardSetTest, SizeCountsEveryMaskBit)
     deck.fill();
     EXPECT_EQ(STANDARD_DECK_SIZE, deck.size());
 }
+
+TEST(CardSetTest, colex_largest_seven_card_hand)
+{
+    const auto hand = CardSet::fromColex(52, 7, 133784559);
+    EXPECT_EQ(hand.size(), 7);
+    EXPECT_EQ(hand.str(), "8s9sTsJsQsKsAs");
+    EXPECT_EQ(hand.colex(), 133784559);
+}
+
+TEST(CardSetTest, colex_all_two_card_hands)
+{
+    for (size_t high = 1; high < 52; ++high)
+        for (size_t low = 0; low < high; ++low)
+        {
+            const auto rank = high * (high - 1) / 2 + low;
+            const CardSet expected((UINT64_C(1) << low) | (UINT64_C(1) << high));
+            EXPECT_EQ(expected.colex(), rank);
+            EXPECT_EQ(CardSet::fromColex(52, 2, rank), expected);
+        }
+}

@@ -33,3 +33,26 @@ TEST(UniversalHandEvaluator, SixCardOmaha)
     EXPECT_EQ(Rank("3"), eval.majorRank());
     EXPECT_EQ(Rank("2"), eval.minorRank());
 }
+
+TEST(UniversalHandEvaluator, invalid_card_count_messages)
+{
+    UniversalHandEvaluator evaluator(4, 4, 3, 5, 2, &CardSet::evaluateHigh, nullptr);
+    try
+    {
+        evaluator.evaluateHand(CardSet("AcAs"), CardSet());
+        FAIL() << "invalid pocket accepted";
+    }
+    catch (const std::invalid_argument& error)
+    {
+        EXPECT_STREQ(error.what(), "UnivHandEval: 2: invalid number of pocket cards");
+    }
+    try
+    {
+        evaluator.evaluateHand(CardSet("AcAsKdKh"), CardSet("2c"));
+        FAIL() << "invalid board accepted";
+    }
+    catch (const std::invalid_argument& error)
+    {
+        EXPECT_STREQ(error.what(), "UnivHandEval: 1 unsupported number of board cards");
+    }
+}

@@ -17,7 +17,8 @@ a poker hand evaluation and equity enumeration library.
 - Boost 1.71+ headers. CLI tools also require Boost.Program_options.
 - Python bindings additionally require SWIG 4.0+ and Python 3 development headers.
 
-The core still uses Boost for parsing, formatting, and combinatorics. It does
+The core still uses Boost for parsing and formatting. Binomial counts now use exact, checked integer
+arithmetic from the standard library. It does
 not need compiled Boost libraries when CLI tools are disabled. GoogleTest is
 bundled and is built only when tests are enabled. No dependencies are fetched
 at configure time.

@@ -84,3 +84,16 @@ TEST(PartitionEnumerator, end_game_ofcp_draws_A)
     } while (walker.next());
     EXPECT_EQ(328860, visits);  // 328,860
 }
+
+TEST(PartitionEnumerator, string_format)
+{
+    PartitionEnumerator2 walker(4, {1, 2});
+    EXPECT_EQ(walker.index_str(), "{0} {0 1}");
+    EXPECT_EQ(walker.str(), "{0} {1 2}");
+    ASSERT_TRUE(walker.next());
+    EXPECT_EQ(walker.index_str(), "{0} {0 2}");
+    EXPECT_EQ(walker.str(), "{0} {1 3}");
+    PartitionEnumerator2 empty(4, {0});
+    EXPECT_EQ(empty.index_str(), "{}");
+    EXPECT_EQ(empty.str(), "{e}");
+}

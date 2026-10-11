@@ -17,7 +17,7 @@
 //  eval b: high/low/227/A25/Badugi/3CP
 
 #include <vector>
-#include <boost/lexical_cast.hpp>
+#include <string>
 #include <util/combinations.h>
 #include <peval/Card.h>
 #include <peval/CardSet.h>
@@ -89,7 +89,7 @@ public:
         if (hand.size() < _heromin ||
             hand.size() > _heromax)
             throw std::invalid_argument(std::string("UnivHandEval: "
-                                                    + boost::lexical_cast<std::string>(uint(hand.size()))
+                                                    + std::to_string(hand.size())
                                                     + ": invalid number of pocket cards"));
         CardSet h = hand;
 
@@ -102,7 +102,7 @@ public:
         if ((bz < _boardmin && bz > 0) ||
             bz > _boardmax)
             throw std::invalid_argument(std::string("UnivHandEval: "
-                                                    + boost::lexical_cast<std::string>((uint)board.size())
+                                                    + std::to_string(board.size())
                                                     + " unsupported number of board cards"));
 
         // generate the possible sub parts, the reference example is omaha
