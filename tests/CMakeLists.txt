@@ -31,3 +31,11 @@ pokerstove_add_tests(util peval TestUtil
     util/combinations_test.cpp
     util/lastbit_test.cpp
 )
+
+if(MODERN_POKERSTOVE_BUILD_APPS)
+    add_test(NAME TestCLI COMMAND ${CMAKE_COMMAND}
+        -DPS_EVAL=$<TARGET_FILE:ps-eval>
+        -DPS_COLEX=$<TARGET_FILE:ps-colex>
+        -DPS_LUT=$<TARGET_FILE:ps-lut>
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/integration/cli_test.cmake)
+endif()

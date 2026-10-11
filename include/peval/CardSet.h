@@ -174,7 +174,7 @@ public:
     // overloaded operators, syntactic sugar. It is no secret that
     // this is a bitset, so exposing bit operations should be ok.
     // one thing that should be considered is implementing the &=, etc
-    // operators for efficiency and generality using boost::opperators
+    // operators for efficiency and generality
     void    operator|=(const CardSet& c) { _cardmask |= c._cardmask; }
     void    operator^=(const CardSet& c) { _cardmask ^= c._cardmask; }
     bool    operator==(const CardSet& c) const { return _cardmask == c._cardmask; }
