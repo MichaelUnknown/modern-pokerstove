@@ -86,9 +86,22 @@ This propagates C++20, include paths, and transitive dependencies. Configure the
 consumer with `-DCMAKE_PREFIX_PATH=/path/to/prefix`; also make the Boost headers
 available. See `examples/cmake-consumer` for a complete example.
 
-This first migration step preserves source locations and public includes such
-as `<pokerstove/peval/CardSet.h>`. The planned layout removes the `pokerstove/`
-include prefix in a separate migration; see [AGENTS.md](AGENTS.md).
+Public headers now use component paths such as `<peval/CardSet.h>` and
+`<penum/ShowdownEnumerator.h>`. This intentionally changes the previous
+`<pokerstove/...>` include paths; update consumer includes accordingly.
+The C++ namespace `pokerstove` and exported target names remain unchanged.
+
+## Project layout
+
+Public headers live in `include/{peval,penum,util}`; implementations and private
+headers in `src/`; CLI tools in `apps/`; component tests in `tests/`; Python
+bindings in `bindings/python/`; vendored GoogleTest in `third_party/googletest/`.
+Documentation is in `docs/`, and installed API examples in `examples/`.
+See [AGENTS.md](AGENTS.md) for directory responsibilities and guidelines.
+Only `include/` is installed as the C++ header tree. Odometer and the unused
+timing helper are internal. `PokerEvaluationTables.h` remains public because
+inline Omaha evaluators currently depend on it; hiding it needs a separate
+implementation refactor.
 
 ## Python bindings
 
@@ -119,8 +132,9 @@ included in the wheel.
 
 ## Migration and validation
 
-This step establishes a standard C++20 build, target-based CMake, optional
-components, installed package exports, and standard-library bit operations.
+The implemented steps establish a C++20 build, target-based CMake, optional
+components, installed package exports, standard-library bit operations, and
+the modern project layout.
 It does not change poker rules or address all correctness findings in upstream.
 The next stages are described in [docs/modernization.md](docs/modernization.md).
 

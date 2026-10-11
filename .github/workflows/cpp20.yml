@@ -31,6 +31,13 @@ jobs:
       - name: Install and test an external consumer
         run: |
           cmake --install build/release --prefix "$RUNNER_TEMP/pokerstove"
+          test ! -e "$RUNNER_TEMP/pokerstove/include/pokerstove"
+          test ! -e "$RUNNER_TEMP/pokerstove/include/penum/Odometer.h"
+          test ! -e "$RUNNER_TEMP/pokerstove/include/util/timing.hpp"
+          for header in "$RUNNER_TEMP/pokerstove/include/"*/*; do
+            relative=${header#"$RUNNER_TEMP/pokerstove/include/"}
+            printf '#include <%s>\n' "$relative" | ${{ matrix.compiler }} -std=c++20 -fsyntax-only -x c++ -I"$RUNNER_TEMP/pokerstove/include" -
+          done
           cmake -S examples/cmake-consumer -B build/consumer -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/pokerstove"
           cmake --build build/consumer --parallel 2
           ctest --test-dir build/consumer --output-on-failure

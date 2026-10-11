@@ -12,23 +12,22 @@ and Python bindings. Preserve upstream copyright and license notices.
 
 ## Current state and modernization
 
-The repository now requires C++20 and CMake 3.24. It still uses Boost and
-inline test files under
-src/lib/pokerstove/, CLI programs under src/programs/, and SWIG bindings under
-src/lib/python/. The layout below is the target architecture; directory and
-public include-path migration have not yet been implemented.
+The repository requires C++20 and CMake 3.24. The layout below is implemented:
+public headers under include/, implementations under src/, CLI programs under
+apps/, tests under tests/, and SWIG bindings under bindings/python/. Boost remains
+in use. Public includes have no pokerstove/ prefix.
 
 Modernize incrementally. Do not restructure the repository or remove
 dependencies as a side effect of an unrelated fix. For an intentional move,
 update CMake, includes, installation/export rules, Python packaging, CI,
-and documentation together. The target layout intentionally changes public
+and documentation together. The implemented layout intentionally changes public
 include paths from <pokerstove/peval/CardSet.h> to <peval/CardSet.h> (and likewise
-for penum and public utilities). Update all consumers, examples, bindings, and
-installation rules in that migration and document the source compatibility break.
+for penum and public utilities). Keep all consumers, examples, bindings, and installation rules consistent with
+these paths.
 Keep the C++ namespace pokerstove and existing target names unless the task
 explicitly changes them. Prefer a separate move-only change before behavior changes.
 
-## Target directory layout
+## Directory layout
 
 | Path | Responsibility |
 | --- | --- |

@@ -1,5 +1,0 @@
-add_subdirectory(pokerstove/peval)
-add_subdirectory(pokerstove/penum)
-if(BUILD_TESTING)
-    add_subdirectory(pokerstove/util)
-endif()
