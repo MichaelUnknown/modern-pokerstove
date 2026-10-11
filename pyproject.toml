@@ -12,7 +12,7 @@ wheel.packages = []
 cmake.version = ">=3.24"
 build.targets = ["pokerstove_python"]
 install.components = ["python"]
-sdist.exclude = ["android", "win32", "docs", ".*"]
+sdist.exclude = ["docs", ".*"]
 [tool.scikit-build.cmake.define]
 MODERN_POKERSTOVE_BUILD_PYTHON = "ON"
 BUILD_TESTING = "OFF"

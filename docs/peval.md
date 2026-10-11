@@ -1,101 +1,225 @@
 # `pokerstove::peval`
 
-The peval library is a simple flexible library for evaluating poker hands.
-There are two main components to the library, the CardSet class and the
-PokerHandEvaluator class.
+The peval library represents cards and evaluates the strength of an existing
+hand. It does not deal missing cards or perform equity rollouts. Use
+[penum](penum.md) to enumerate possible hand and board completions.
 
-## CardSet
+Link an installed CMake consumer to `pokerstove::peval`; public includes use
+`<peval/...>` and the C++ namespace remains `pokerstove`. The library requires
+C++20. See [the README](../README.md#install-and-consume-the-c-libraries) for
+build and installation instructions.
 
-The CardSet class is available by including `<peval/CardSet.h>`.
+## Cards and card sets
 
-The CardSet class represents a bitset of all cards encoded as a bitset, as well
-as various utility functions for manipulating and querying the contents of the
-bitset.
+`Card`, `Rank`, and `Suit` are defined in `<peval/Card.h>`, `<peval/Rank.h>`, and
+`<peval/Suit.h>`. Use two-character card tokens: ranks `23456789TJQKA` and suits
+`cdhs` (clubs, diamonds, hearts, spades). A ten is `T`, not `10`.
 
-Each card is represented as a bit in a 64-bit integer.  Because a standard deck
-has 52 cards, this means that there are another 12 bits that are available for
-other processing.  In the future some of these bits will certainly be used for
-encoding other special cards, like the joker and the bug.
+`<peval/CardSet.h>` defines an unordered set of unique cards stored in a
+`uint64_t`. Bits 0–51 represent the standard deck, in suit blocks:
+`2c` through `Ac`, then diamonds, hearts, and spades through `As`. Bits 52–63
+are unused; they do not represent supported jokers or other cards. The raw-mask
+constructor does not validate the mask, so callers must keep those bits clear.
 
-Because the representation is openly advertised as a bitset, the bit
-manipulation operators are overloaded so that two CardSet objects can be
-operated on directly at the bit level.
+```cpp
+#include <iostream>
+#include <peval/Card.h>
+#include <peval/CardSet.h>
 
-Creating a CardSet object is meant to be straightforward, using the various low
-level object representations of Card, Rank, and Suit objects.  Alternatively,
-string representations can be used to create them.
+int main()
+{
+    using namespace pokerstove;
+    CardSet big_slick = CardSet(Card(Rank('A'), Suit('s'))) |
+                        CardSet(Card(Rank('K'), Suit('s')));
+    CardSet dead_mans_hand("AcAs8d8hJs");
+    std::cout << big_slick.str() << '\n';
+    std::cout << dead_mans_hand.str() << '\n';
+}
+```
 
-Here is a sample program that constructs two hands and prints them to the console.
+With the default ASCII suit display, `str()` prints in card-code order, so the
+output is `KsAs` and `Ac8d8hJsAs`, rather than preserving input order.
 
-    #include <iostream>
-    #include <peval/CardSet.h>
+### Input requirements
 
-    using pokerstove::CardSet;
-    using pokerstove::Card;
-    using pokerstove::Rank;
-    using pokerstove::Suit;
+The `CardSet(string)` constructor is a legacy convenience parser, not a checked
+input boundary. Duplicate cards clear the set, and malformed tokens are not
+reliably rejected with exceptions. Validate syntax, uniqueness, and game-specific
+card counts before construction. For external input, `CardDistribution::parse`
+provides checked raw-card parsing (see [penum](penum.md#card-distributions)); for
+a single hand, require exactly one entry and the expected card count.
 
-    int main(void)
-    {
-        CardSet big_slick(Card(Rank('A'),Suit('s')),
-                          Card(Rank('K'),Suit('s')));
-        std::cout << big_slick.str() << std::endl;
+Set union (`|`, `|=`, `insert`) combines known cards; intersection (`&`),
+`contains`, `intersects`, and `disjoint` help enforce card consistency.
+`cards()` returns `Card` objects and `cardSets()` returns singleton sets, both
+in card-code order. `clear()` empties a set; `fill()` selects the entire deck.
 
-        CardSet dead_mans_hand("AcAs8d8hJs");
-        std::cout << dead_mans_hand.str() << std::endl;
-    }
+The current `remove(Card)` and `remove(CardSet)` implementations use XOR. They
+remove present cards but add absent ones. Only call them when all requested
+cards are already present; they are not general set-difference operations.
 
-The expected output is:
+### Formatting and suit canonicalization
 
-    AsKs
-    AcAs8d8hJs
+- `rankstr()` returns the rank characters, including duplicates, sorted by
+  character value rather than poker rank.
+- `rankMask()` gives a 13-bit mask of occupied ranks.
+- `toRankBitString()` actually prints 52 card-presence markers (`1` or `.`),
+  grouped into four 13-card suit blocks, with spaces after each block.
+- `Suit::setSuitStringType` changes suit display globally (ASCII, HTML, ANSI,
+  and other formats). Only ASCII output is guaranteed to be parseable again;
+  avoid changing the display mode concurrently with other output.
+- `canonize()` relabels suits to a canonical representation; `canonize(other)`
+  does so relative to another set. `canonizeToBoard(board, hand)` applies the
+  board's canonical suit permutation to the hand. These operations relabel
+  suits, not ranks, and are separate from dense indexing.
 
-### Low level CardSet evaluation
+## Evaluation results and ordering
 
-Currently the low level evaluation code is bound directly to the CardSet class.
-There is a remarkable number of evaluators that exist, yet none of them
-encompass any specific game structure.  Direct evaluators exist for:
+`<peval/PokerEvaluation.h>` defines an order-preserving evaluation code.
+**A better hand compares greater than a worse hand**, including lowball and
+Badugi evaluations. Compare only evaluations produced under the same rules;
+high, A-5, 2-7, and Badugi codes are not interchangeable.
 
-* high poker
-* lowball poker (A-5)
-* lowball with an 8 qualifier (A-5)
-* lowball poker (2-7)
-* badugi
-* rank evaluations
-* suit evaluations
+Use `str()`, `handType()`, `type()`, `majorRank()`, `minorRank()`, and
+`kickerBits()` to inspect a result. `code()` exposes the integer encoding and
+`bitstr()` helps debug it. Codes are not dense array indices. `showdownCode()`
+and `reducedCode()` discard information; use the full evaluation for general
+hand comparison, including kickers. No stable cross-version serialized code
+format is promised here.
 
-Plus a couple of others.  These low level evaluators exist for the purposes of
-building evaluations for more complex games, as well as producing partial
-evaluations during optimization.
+`<peval/PokerHandEvaluation.h>` holds up to two evaluations:
 
-### Colex evaluators
+- `high()` or `eval(0)` is the primary evaluation, even in a low-only game.
+- `low()` or `eval(1)` is the secondary evaluation for split-pot games.
+- A zero secondary evaluation means there is no qualifying low.
+  `highlow()` and `size()` describe the result, not the game's capabilities.
+  Use the evaluator's `evaluationSize()` to ask whether the game supports two
+  pot components.
+- `shares(hero, villain)` returns the first hand's heads-up share for the
+  supplied evaluations, including ties, scoops, and quartering. It enumerates
+  no future cards.
 
-There are two colex evaluators which are designed to map card sets (and rank
-sets) to a unique index.  These again are used for managing complex evaluatins,
-and creating static and dynamic evaluation lookup tables.
+## Low-level evaluation
 
-### Printing utilities
+`CardSet` provides the building blocks for game evaluators:
 
-There is a small handful of printing utilities, which print out the hand as a
-string.  The rankstr() method prints the hand without suits, whereas
-toRankBitString() prints out thirteen 0/1 values representing whether or not the
-given rank exists in the hand.
+| Method | Rules |
+| --- | --- |
+| `evaluateHigh()` | Best high-poker hand from the supplied cards. |
+| `evaluateLowA5()` | Ace-to-five lowball: aces low; straights and flushes ignored. |
+| `evaluate8LowA5()` | A-5 low with an eight-or-better qualifier; zero when no low qualifies. |
+| `evaluateLow2to7()` | Deuce-to-seven lowball: aces high; straights and flushes count against the hand. |
+| `evaluate3CP()` | Three-card poker ordering. |
+| `evaluateBadugi()` | Best subset of distinct ranks and suits, with low ranks preferred. |
 
-Of special note is the Suit::setSuitStringType(Suit::display s) method which
-allows suits to be printed in a variety of formats, including html, ansi,
-extended ascii (ibm) with four color options.
+Rank-only and flush/suit-only helpers support specialized optimizations; their
+results are not complete game evaluations. Low-level routines do not enforce
+pocket/board selection rules and some are unsafe for empty or oversized sets.
+Use documented game sizes and validate input before evaluation; do not assume
+all methods accept arbitrary subsets of the 52-card deck.
 
 ## Game evaluation
 
-Specific games use the low level evaluators to contruct evaluations according to
-the rules of the given game.  For example, the HoldemHandEvaluator melds a
-players pocket cards with a community board.  Likewise, the
-StudEightHandEvaluator uses both evaluateHigh() and evaluate8LowA5() as it is a
-split pot game.
+`<peval/PokerHandEvaluator.h>` defines the polymorphic game interface. Its
+`alloc(id)` factory returns a `shared_ptr<PokerHandEvaluator>` or `nullptr` for
+an empty/unsupported identifier. Always check the result before use.
 
-The UniversalHandEvaluator is a utility class that that supports parameterized
-game evaluation.  Most of the classic games can be constructed with this
-evaluator, though optimized versions are created to speed up specific games.
+The following IDs reflect the current factory implementation. Pocket and board
+sizes are the completed sizes used by the enumerator:
 
-The factory PokerHandEvaluator::alloc() can be used to construct the appropriate
-game evaluator based on the input string.
+| ID | Game | Pocket / board | Pot components |
+| --- | --- | --- | --- |
+| `h` | Hold'em high | 2 / 5 | 1 |
+| `o`, `omaha` | Omaha high | 4 / 5 | 1 |
+| `o8`, `o/8`, `omaha/8` | Omaha eight-or-better | 4 / 5 | 2 |
+| `s` | Seven-card stud high | 7 / 0 | 1 |
+| `r` | Razz (A-5) | 7 / 0 | 1 |
+| `e` | Seven-card stud eight-or-better | 7 / 0 | 2 |
+| `q` | Seven-card stud high/low without a qualifier | 7 / 0 | 2 |
+| `d` | Five-card draw high | 5 / 0 | 1 |
+| `k`, `t` | Five-card 2-7 lowball | 5 / 0 | 1 |
+| `l` | Five-card A-5 lowball | 5 / 0 | 1 |
+| `3` | Three-card poker | 3 / 0 | 1 |
+| `b` | Badugi | 4 / 0 | 1 |
+
+Identifiers are lowercased. Most non-Omaha games are selected only by the first
+character; this is not strict full-name validation. In particular, `O` selects
+Omaha high, and `T` selects 2-7, despite historical header comments assigning
+those capitals other meanings. Use `l` for A-5. The accepted `o5`, `o6`,
+`o5/8`, and `o6/8` IDs currently configure four-card pockets, so they do not
+implement five/six-card Omaha correctly.
+
+Hold'em evaluates the best five cards from pocket plus board, permitting any
+number of pocket cards to play. Completed Omaha evaluation requires exactly
+two of four pocket cards and three board cards; its specialized evaluator
+expects four pocket cards and a board of three to five cards. `handSize()`,
+`boardSize()`, and `evaluationSize()` describe the evaluator; they do not imply
+that every method checks these input constraints.
+
+```cpp
+#include <iostream>
+#include <stdexcept>
+#include <peval/PokerHandEvaluator.h>
+
+int main()
+{
+    using namespace pokerstove;
+    auto evaluator = PokerHandEvaluator::alloc("h");
+    if (!evaluator)
+        throw std::runtime_error("Unsupported game");
+    const CardSet board("2c3d4h5s9c");
+    const auto aces = evaluator->evaluateHand(CardSet("AcAs"), board);
+    const auto kings = evaluator->evaluateHand(CardSet("KhKd"), board);
+    std::cout << aces.str() << '\n';
+    std::cout << (aces.high() > kings.high()) << '\n'; // 1: aces make a straight
+}
+```
+
+`evaluateHand()` returns the full result. `eval()` returns just the primary
+component and loses split-pot information. `UniversalHandEvaluator` is a
+configurable alternative using pocket/board bounds, a pocket-selection count,
+and one or two `CardSet` evaluation functions; it is not the specialized fast
+path for every game.
+
+### Current hands versus equity
+
+Evaluating a flop or partial hand describes only the cards currently supplied;
+it does not calculate the probability of winning after future deals. For
+exhaustive equity over missing cards, use `ShowdownEnumerator` from penum.
+
+`evaluateShowdown(hands, board, evals, results, weight)` accumulates weighted
+pot shares without clearing `results`. `evals` and `results` must have equal,
+nonzero sizes; `hands` must contain at least that many hands. Validate disjoint
+cards and game-specific counts before calling it. In split-pot games, the
+whole pot goes to high when nobody qualifies for low; otherwise high and low
+are awarded separately.
+
+`evaluateEquity(c1, c2, board)` evaluates only the supplied showdown, with no
+completions. It currently calls the defective `EquityResult::normalize()`;
+for reliable normalization, use a fixed total as shown in the
+[penum example](penum.md#calculating-equity). The existing payout lookup also
+has a maximum index of 10: keep player count at most ten for single-component
+games and at most five for split-pot games.
+
+## Colexicographic indices
+
+For a fixed card count `k`, `CardSet::colex()` maps each physical card set to a
+unique zero-based index in `[0, choose(52, k))`. With ascending card codes
+`c[0] ... c[k-1]`, it computes `sum(choose(c[i], i + 1))`.
+`CardSet::fromColex(k, index)` reverses this mapping. Supply the same card count
+and an in-range index; counts must not be mixed in one index space. The overload
+with a deck size additionally requires a compatible card-code domain.
+
+```cpp
+const pokerstove::CardSet hand("AcAs");
+const auto index = hand.colex();
+const auto restored = pokerstove::CardSet::fromColex(2, index);
+// restored == hand
+```
+
+`rankColex()` instead indexes rank multiplicities while ignoring suits; it does
+not uniquely identify physical card sets. Colex indices and evaluation codes
+serve different purposes. The public colex API returns `size_t`; large spaces
+such as seven-card sets need a 64-bit platform. `choose` in
+`<util/combinations.h>` uses checked `uint64_t` arithmetic, but that does not
+widen a 32-bit `size_t` result.

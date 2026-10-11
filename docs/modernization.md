@@ -85,7 +85,17 @@
   and installation requirements from all active CMake/CI configuration.
 - Cover CLI behavior with CTest integration tests, enabled only for apps+tests.
   Core, Python packaging and installed C++ consumers acquire no CLI dependency.
-- Historical android/win32 artifacts and modernization history are preserved.
+- Historical android/win32 artifacts were preserved at this step; the later
+  documentation cleanup below removes them. Modernization history is preserved.
+
+## Documentation and legacy artifact cleanup (implemented)
+
+- Remove the historical Windows installer and Android demo from this fork;
+  README.md links to the copies in Andrew Prock's upstream repository.
+- Remove the legacy AsciiDoc `doc/` design notes and link to their upstream
+  location. Current API documentation lives in `docs/`.
+- Add the penum guide and expand the peval guide with examples, game selection,
+  evaluation ordering, input requirements, and current limitations.
 
 ## Step 4: CPM dependencies and PackageProject installation (implemented)
 
