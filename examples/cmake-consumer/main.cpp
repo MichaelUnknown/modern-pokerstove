@@ -1,5 +1,5 @@
-#include <pokerstove/peval/CardSet.h>
-#include <pokerstove/penum/ShowdownEnumerator.h>
+#include <peval/CardSet.h>
+#include <penum/ShowdownEnumerator.h>
 
 #include <vector>
 

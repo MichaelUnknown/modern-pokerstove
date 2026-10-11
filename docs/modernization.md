@@ -14,23 +14,33 @@
 - Check Release/shared builds, sanitizer tests, installed CMake consumers,
   Python imports, and wheel packaging.
 
+## Step 2: Project layout and public includes (implemented)
+
+- Separate public headers in `include/` from implementation in `src/`.
+- Move CLI tools to `apps/`, unit tests to `tests/`, Python bindings to
+  `bindings/python/`, and unchanged vendored GoogleTest to `third_party/`.
+- Consolidate documentation in `docs/`.
+- Migrate includes, CMake installation/export, SWIG, source distribution, and
+  installed consumer examples together.
+- Use `<peval/...>`, `<penum/...>`, and `<util/...>` instead of the old
+  `<pokerstove/...>` paths. Consumers must update includes; namespaces and CMake
+  target names are unchanged. Odometer and the unused timing helper are private.
+- Keep evaluation tables public for now because inline public Omaha evaluators
+  use them. Making them private requires moving those implementations separately.
+- Preserve poker behavior and dependency versions.
+
 ## Next steps
 
 These are separate changes, not prerequisites for using the C++20 build:
 
-1. Move public headers to `include/peval`, `include/penum`, and the minimal
-   public `include/util` tree; move implementations, apps, tests, bindings,
-   and third-party sources to the layout in AGENTS.md. Migrate internal and
-   external includes, installation, SWIG, wheel source manifests, and examples
-   together. Document the intentional public include-path break.
-2. Remove remaining Boost utilities incrementally. Use exact integer
+1. Remove remaining Boost utilities incrementally. Use exact integer
    combinatorics, checked standard numeric parsing, and compatible formatting.
    Keep CLI parsing and tests independently scoped. Verify parsing and output
    semantics before replacing them.
-3. Fix upstream correctness issues in separate tested changes: split-pot tie
+2. Fix upstream correctness issues in separate tested changes: split-pot tie
    bounds, A-5 paired-hand evaluation, normalization, evaluator selection,
    card removal, duplicate range handling, and invalid input validation.
-4. Add reproducible benchmarks, then optimize allocation, subset caching,
+3. Add reproducible benchmarks, then optimize allocation, subset caching,
    collision pruning, and random-hand enumeration based on measurements.
 
 C++20 compilation alone does not fix the upstream poker correctness issues.

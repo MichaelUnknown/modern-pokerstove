@@ -33,7 +33,7 @@ function(pokerstove_configure_library target)
         CXX_STANDARD 20 CXX_STANDARD_REQUIRED YES CXX_EXTENSIONS NO
         POSITION_INDEPENDENT_CODE ON)
     target_include_directories(${target} PUBLIC
-        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/lib>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
     target_link_libraries(${target} PUBLIC Boost::headers)
 endfunction()
@@ -43,23 +43,26 @@ if(BUILD_TESTING)
     set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
     set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-    add_subdirectory(src/ext/googletest EXCLUDE_FROM_ALL)
+    add_subdirectory(third_party/googletest EXCLUDE_FROM_ALL)
 endif()
 
-add_subdirectory(src/lib)
+add_subdirectory(src)
+if(BUILD_TESTING)
+    add_subdirectory(tests)
+endif()
 if(MODERN_POKERSTOVE_BUILD_APPS)
-    add_subdirectory(src/programs)
+    add_subdirectory(apps)
 endif()
 if(MODERN_POKERSTOVE_BUILD_PYTHON)
-    add_subdirectory(src/lib/python)
+    add_subdirectory(bindings/python)
 endif()
 
 install(TARGETS peval penum EXPORT pokerstoveTargets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT development
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT development
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT development)
-# Keep legacy include paths until the separate directory migration.
-install(DIRECTORY src/lib/pokerstove/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/pokerstove
+# Only the public header tree is installed.
+install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     COMPONENT development FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp")
 set(package_dir ${CMAKE_INSTALL_LIBDIR}/cmake/pokerstove)
 configure_package_config_file(cmake/pokerstoveConfig.cmake.in
