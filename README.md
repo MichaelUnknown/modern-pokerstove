@@ -108,6 +108,9 @@ Public headers live in `include/{peval,penum,util}`; implementations and private
 headers in `src/`; CLI tools in `apps/`; component tests in `tests/`; Python
 bindings in `bindings/python/`; vendored GoogleTest in `third_party/googletest/`.
 Documentation is in `docs/`, and installed API examples in `examples/`.
+See the [peval API guide](docs/peval.md) for card representations and game
+evaluation, and the [penum API guide](docs/penum.md) for weighted distributions,
+exhaustive enumeration, and equity calculation.
 See [AGENTS.md](AGENTS.md) for directory responsibilities and guidelines.
 Only `include/` is installed as the C++ header tree. Odometer and the unused
 timing helper are internal. `PokerEvaluationTables.h` remains public because
@@ -171,5 +174,18 @@ ctest --test-dir build/sanitizers --output-on-failure
 ```
 
 Sanitizer flags above apply to GCC/Clang on supported platforms. Existing
-upstream copyright/license notices and historical `android/` and `win32/`
-artifacts are preserved.
+upstream copyright/license notices are preserved.
+
+## Legacy files
+
+The historical Windows installer (`win32/PokerStoveSetup124.exe`) and Android
+demo (`android/PokerStoveDemo.apk`) have been removed from this fork. They remain
+available in the upstream repository:
+
+- [PokerStove Windows installer](https://github.com/andrewprock/pokerstove/blob/master/win32/PokerStoveSetup124.exe)
+- [PokerStove Android demo](https://github.com/andrewprock/pokerstove/blob/master/android/PokerStoveDemo.apk)
+
+These are upstream binaries, not builds of Modern PokerStove. The legacy
+AsciiDoc `doc/` directory has also been removed; its historical design notes
+remain in [upstream `doc/`](https://github.com/andrewprock/pokerstove/tree/master/doc).
+Current documentation lives in `docs/`.

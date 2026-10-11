@@ -12,7 +12,7 @@ wheel.packages = []
 cmake.version = ">=3.24"
 build.targets = ["pokerstove"]
 install.components = ["python"]
-sdist.exclude = ["android", "win32", "docs", ".*"]
+sdist.exclude = ["docs", ".*"]
 [tool.scikit-build.cmake.define]
 BUILD_WHEEL = "ON"
 BUILD_TESTING = "OFF"

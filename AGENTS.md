@@ -70,8 +70,10 @@ new tests. Preserve existing public class/header names during migration.
 
 Build out of source under build/<configuration>/; keep generated sources in
 the build tree, including SWIG outputs. Do not commit build products, downloaded
-dependencies, local datasets, or CMakeUserPresets.json. Keep historical android/
-and win32/ artifacts separate from active source; do not delete them implicitly.
+dependencies, local datasets, or CMakeUserPresets.json. Historical android/,
+win32/, and doc/ files have been removed; README.md links to their upstream
+locations. Keep current documentation under docs/ and do not reintroduce legacy
+binaries.
 
 ## C++20 implementation guidelines
 
