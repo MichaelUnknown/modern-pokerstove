@@ -1,0 +1,75 @@
+name: C++20
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  cpp:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [g++, clang++]
+        shared: ['OFF', 'ON']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build dependencies
+        run: sudo apt-get update && sudo apt-get install -y cmake clang libboost-program-options-dev
+      - name: Configure
+        run: >-
+          cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
+          -DBUILD_SHARED_LIBS=${{ matrix.shared }}
+      - name: Build and test
+        run: |
+          cmake --build build/release --parallel 2
+          ctest --test-dir build/release --output-on-failure
+      - name: Install and test an external consumer
+        run: |
+          cmake --install build/release --prefix "$RUNNER_TEMP/pokerstove"
+          cmake -S examples/cmake-consumer -B build/consumer -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/pokerstove"
+          cmake --build build/consumer --parallel 2
+          ctest --test-dir build/consumer --output-on-failure
+  core:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y cmake libboost-dev
+      - name: Build only the core without tests or apps
+        run: |
+          cmake --preset core
+          cmake --build --preset core --parallel 2
+  sanitizers:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y cmake libboost-dev
+      - name: Build and test with ASan and UBSan
+        run: |
+          cmake -S . -B build/sanitizers -DCMAKE_BUILD_TYPE=Debug -DMODERN_POKERSTOVE_BUILD_APPS=OFF -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+          cmake --build build/sanitizers --parallel 2
+          ctest --test-dir build/sanitizers --output-on-failure
+  python:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: sudo apt-get update && sudo apt-get install -y cmake swig libboost-dev
+      - name: Build bindings and run smoke tests
+        run: |
+          cmake --preset python
+          cmake --build --preset python --parallel 2
+          ctest --preset python
+      - name: Build a wheel from the source distribution and import it
+        run: |
+          python -m pip install build
+          python -m build
+          python -m pip install dist/*.whl
+          cd "$RUNNER_TEMP"
+          python -c 'import pokerstove; assert pokerstove.CardSet("AcAs").size() == 2'

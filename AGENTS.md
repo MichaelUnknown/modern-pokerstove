@@ -12,10 +12,11 @@ and Python bindings. Preserve upstream copyright and license notices.
 
 ## Current state and modernization
 
-The repository currently uses C++14, Boost, inline test files under
+The repository now requires C++20 and CMake 3.24. It still uses Boost and
+inline test files under
 src/lib/pokerstove/, CLI programs under src/programs/, and SWIG bindings under
-src/lib/python/. C++20 and the layout below are the target architecture, not
-features already implemented.
+src/lib/python/. The layout below is the target architecture; directory and
+public include-path migration have not yet been implemented.
 
 Modernize incrementally. Do not restructure the repository or remove
 dependencies as a side effect of an unrelated fix. For an intentional move,
@@ -175,9 +176,12 @@ cmake --build build/release --parallel
 ctest --test-dir build/release --output-on-failure
 ```
 
-The current build requires Boost.Program_options and does not yet provide
-the target component switches above. If dependencies or tools are unavailable,
-report the limitation instead of claiming checks passed.
+The core requires Boost headers; Boost.Program_options is needed only with
+MODERN_POKERSTOVE_BUILD_APPS=ON. BUILD_TESTING controls the bundled tests and
+MODERN_POKERSTOVE_BUILD_PYTHON controls the optional SWIG/Python bindings.
+BUILD_WHEEL and BUILD_PYTHON remain supported packaging/legacy switches.
+If dependencies or tools are unavailable, report the limitation instead of
+claiming checks passed.
 
 Add focused regression tests for behavior changes, including invalid inputs.
 Use deterministic property/differential tests where useful: compare optimized

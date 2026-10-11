@@ -6,7 +6,6 @@
 #define PEVAL_SUIT_H_
 
 #include <cstdint>
-#include <boost/operators.hpp>
 #include <string>
 
 namespace pokerstove
@@ -85,7 +84,6 @@ public:
      * Construct suit from the first char of the input string.  Exception will
      * be thrown if the character is not a valid suit character.
      *
-     * boost/operators.hpp is used for closure
      */
     bool operator==(const Suit& s) const { return _suit == s._suit; }
     bool operator<=(const Suit& s) const { return _suit <= s._suit; }
