@@ -15,16 +15,14 @@ and Python bindings. Preserve upstream copyright and license notices.
 The repository requires C++20 and CMake 3.24. The layout below is implemented:
 public headers under include/, implementations under src/, CLI programs under
 apps/, tests under tests/, and SWIG bindings under bindings/python/. CLI parsing
-uses vendored cxxopts; no active build requires Boost. Public includes have no
+uses CPM-managed cxxopts; no active build requires Boost. Public includes have no
 pokerstove/ prefix.
 
 Modernize incrementally. Do not restructure the repository or remove
 dependencies as a side effect of an unrelated fix. For an intentional move,
 update CMake, includes, installation/export rules, Python packaging, CI,
-and documentation together. The implemented layout intentionally changes public
-include paths from <pokerstove/peval/CardSet.h> to <peval/CardSet.h> (and likewise
-for penum and public utilities). Keep all consumers, examples, bindings, and installation rules consistent with
-these paths.
+and documentation together. Keep consumers, examples, bindings, and installation
+rules consistent with public component include paths such as <peval/CardSet.h>.
 Keep the C++ namespace pokerstove and existing target names unless the task
 explicitly changes them. Prefer a separate move-only change before behavior changes.
 
@@ -44,13 +42,12 @@ explicitly changes them. Prefer a separate move-only change before behavior chan
 | tests/data/ | Small, deterministic test fixtures with documented provenance. |
 | benchmarks/ | Reproducible performance workloads, separate from correctness tests. |
 | bindings/python/ | SWIG interface, Python package code, and binding-specific tests. |
-| cmake/ | Package configuration templates and reusable CMake modules. |
+| cmake/ | CPM bootstrap, dependency declarations, component builds, and PackageProject installation. |
 | docs/ | API, architecture, build, and development documentation. |
 | examples/ | Small examples using installed public APIs. |
 | tools/ | Maintainer scripts and lookup-table generators. |
-| third_party/ | Explicitly vendored dependencies with licenses and pinned versions. |
 
-Keep CMakeLists.txt, CMakePresets.json when introduced, README.md, LICENSE.txt,
+Keep CMakeLists.txt, README.md, LICENSE.txt,
 AGENTS.md, formatting configuration, and pyproject.toml at the root as applicable.
 Create directories only when they contain useful content.
 
@@ -142,15 +139,25 @@ document any floating-point reproducibility tradeoffs.
 
 ## Dependencies and build system
 
-Prefer the standard library when it fully covers the requirement. Remove Boost
-incrementally with behavior-preserving tests. Check parsing and formatting
-semantics when replacing lexical_cast or format. Use std::format only when
+Prefer the standard library when it fully covers the requirement. Check parsing
+and formatting semantics when replacing dependencies. Use std::format only when
 the supported C++20 standard libraries implement it.
 
 There is no standard CLI parser, test framework, or Python binding generator.
 Keep GoogleTest for tests; isolate CLI parsing dependencies to apps and SWIG/
 Python dependencies to bindings. Add dependencies only for a concrete benefit,
-with a documented version/license and reproducible acquisition.
+with a documented version/license and reproducible acquisition. Declare C++
+build dependencies in cmake/dependencies.cmake using CPM.cmake and immutable
+upstream commits. Keep downloaded sources in the build tree or CPM_SOURCE_CACHE;
+do not recreate third_party/ or vendor headers. Update the CPM bootstrap version
+and SHA256 together. Keep dependency licenses with distributed binaries.
+
+PackageProject.cmake generates component exports and the aggregate pokerstove
+package. Preserve pokerstove::peval and pokerstove::penum for both local and
+installed consumers. Installed packages must not depend on CPM, cxxopts,
+GoogleTest, Python, or source-tree paths. The core itself has no external C++
+runtime dependency. SWIG and Python are discovered as host tools, not downloaded
+by CPM.
 
 Use target-based CMake: target_compile_features(... PUBLIC cxx_std_20),
 CXX_EXTENSIONS OFF, target_include_directories, target_link_libraries,
@@ -158,17 +165,16 @@ and target_compile_options. Avoid global compiler flags, include paths, and
 link directories. Use imported targets and BUILD_INTERFACE/INSTALL_INTERFACE
 for exported includes. Use GNUInstallDirs and install/export package targets.
 
-When modernizing CMake, introduce BUILD_TESTING through include(CTest) and
-project-specific options for apps, benchmarks, and Python bindings. Discover
-optional dependencies only when their component is enabled. Tests must not be
+Use BUILD_TESTING with include(CTest) and project-specific options for apps
+and Python bindings. Default apps and tests to OFF when included as a subproject.
+Discover optional dependencies only when their component is enabled. Tests must not be
 required to build/install the core or a Python wheel. Document a supported
 CMake minimum and compiler/standard-library versions; keep them consistent
 across CMake, packaging, README, and CI.
 
 ## Validation and delivery
 
-Use existing build instructions and options until modernization implements
-replacements. The current default build can be checked with:
+The default build can be checked with:
 
 ```sh
 cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release
@@ -176,10 +182,14 @@ cmake --build build/release --parallel
 ctest --test-dir build/release --output-on-failure
 ```
 
-No component requires Boost. Vendored cxxopts is used only with
-MODERN_POKERSTOVE_BUILD_APPS=ON. BUILD_TESTING controls the bundled tests and
+CPM downloads PackageProject.cmake for the build; cxxopts is acquired only with
+MODERN_POKERSTOVE_BUILD_APPS=ON and GoogleTest only with BUILD_TESTING=ON.
 MODERN_POKERSTOVE_BUILD_PYTHON controls the optional SWIG/Python bindings.
-BUILD_WHEEL and BUILD_PYTHON remain supported packaging/legacy switches.
+The first configure needs network access. Use an absolute CPM_SOURCE_CACHE
+outside the checkout to reuse sources; a fully populated cache permits offline
+configuration. Verify core-only and installed-consumer builds when dependencies
+or packaging change. Python wheels build the pokerstove_python target and install
+only the python component.
 If dependencies or tools are unavailable, report the limitation instead of
 claiming checks passed.
 
