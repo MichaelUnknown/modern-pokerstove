@@ -4,7 +4,6 @@
  */
 #include <peval/Suit.h>
 #include <peval/Card.h>
-#include <boost/format.hpp>
 #include <iostream>
 #include <stdexcept>
 
@@ -110,8 +109,7 @@ string Suit::decodeSuitASCII_EXT(int card) const
             c = '?';
     }
 
-    string buf = (boost::format("%c") % c).str();  // boost::format may be overkill
-    return buf;
+    return string(1, static_cast<char>(c));
 }
 
 string Suit::decodeSuitHTML(int c) const

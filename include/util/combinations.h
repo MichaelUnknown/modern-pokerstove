@@ -6,21 +6,46 @@
 #define COMMON_ENUM_COMBINATIONS_H_
 
 #include <algorithm>
-#include <boost/lexical_cast.hpp>
-#include <boost/math/special_functions/binomial.hpp>
+#include <cstddef>
+#include <cstdint>
+#include <limits>
+#include <numeric>
+#include <stdexcept>
+#include <string>
 #include <util/lastbit.h>
 #include <util/utypes.h>
 
 namespace pokerstove
 {
 
-// simple wrapper around boost's implementatoin to allow 0c1, etc
-inline double choose(int n, int m)
+/**
+ * Exact N choose K count. Impossible selections return zero; negative inputs
+ * and counts exceeding uint64_t throw instead of rounding or wrapping.
+ */
+inline std::uint64_t choose(int n, int k)
 {
-    // 4c8 is zero, you can't select 8 things from 4 items
-    return (n < m)
-        ? 0
-        : static_cast<size_t>(boost::math::binomial_coefficient<double>(n, m));
+    if (n < 0 || k < 0)
+        throw std::invalid_argument("choose: negative argument");
+    if (k > n)
+        return 0;
+    k = std::min(k, n - k);
+
+    std::uint64_t result = 1;
+    for (int i = 1; i <= k; ++i)
+    {
+        std::uint64_t numerator = static_cast<std::uint64_t>(n - k + i);
+        std::uint64_t denominator = static_cast<std::uint64_t>(i);
+        auto divisor = std::gcd(numerator, denominator);
+        numerator /= divisor;
+        denominator /= divisor;
+        divisor = std::gcd(result, denominator);
+        result /= divisor;
+        // The remaining denominator is one: each recurrence is integral.
+        if (result > std::numeric_limits<std::uint64_t>::max() / numerator)
+            throw std::overflow_error("choose: count exceeds uint64_t");
+        result *= numerator;
+    }
+    return result;
 }
 
 /**
@@ -80,7 +105,7 @@ public:
     {
         std::string ret;
         for (size_t i = 0; i < size(); i++)
-            ret += boost::lexical_cast<std::string>((*this)[i]) + " ";
+            ret += std::to_string((*this)[i]) + " ";
         return ret;
     }
 

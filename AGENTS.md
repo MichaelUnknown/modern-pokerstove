@@ -14,8 +14,8 @@ and Python bindings. Preserve upstream copyright and license notices.
 
 The repository requires C++20 and CMake 3.24. The layout below is implemented:
 public headers under include/, implementations under src/, CLI programs under
-apps/, tests under tests/, and SWIG bindings under bindings/python/. Boost remains
-in use. Public includes have no pokerstove/ prefix.
+apps/, tests under tests/, and SWIG bindings under bindings/python/. Boost.Program_options remains
+in use only for CLI parsing. Public includes have no pokerstove/ prefix.
 
 Modernize incrementally. Do not restructure the repository or remove
 dependencies as a side effect of an unrelated fix. For an intentional move,
@@ -175,8 +175,8 @@ cmake --build build/release --parallel
 ctest --test-dir build/release --output-on-failure
 ```
 
-The core requires Boost headers; Boost.Program_options is needed only with
-MODERN_POKERSTOVE_BUILD_APPS=ON. BUILD_TESTING controls the bundled tests and
+The core and Python bindings require no Boost. Boost.Program_options is needed
+only with MODERN_POKERSTOVE_BUILD_APPS=ON. BUILD_TESTING controls the bundled tests and
 MODERN_POKERSTOVE_BUILD_PYTHON controls the optional SWIG/Python bindings.
 BUILD_WHEEL and BUILD_PYTHON remain supported packaging/legacy switches.
 If dependencies or tools are unavailable, report the limitation instead of

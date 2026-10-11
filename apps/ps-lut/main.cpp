@@ -1,4 +1,4 @@
-#include <boost/format.hpp>
+#include <iomanip>
 #include <boost/program_options.hpp>
 #include <iostream>
 #include <peval/Card.h>
@@ -62,16 +62,9 @@ int main(int argc, char** argv)
                 if (ranks)
                 {
                     PokerEvaluation eval = evaluator->evaluateRanks(*pit, *bit);
-                    // cout << boost::format("%s, %s\n") % pit->rankstr() %
-                    // bit->rankstr();
-
-                    cout << boost::format("%s, %s: [%4d,%4d] -> %s [%9d]\n") %
-                                pit->str() %
-                                bit->str() %
-                                pit->rankColex() %
-                                bit->rankColex() %
-                                eval.str() %
-                                eval.code();
+                    cout << pit->str() << ", " << bit->str() << ": ["
+                         << setw(4) << pit->rankColex() << "," << setw(4) << bit->rankColex()
+                         << "] -> " << eval.str() << " [" << setw(9) << eval.code() << "]\n";
                 }
                 else
                 {
@@ -79,13 +72,9 @@ int main(int argc, char** argv)
                     if (pit->intersects(*bit))
                         continue;
                     PokerHandEvaluation eval = evaluator->evaluate(*pit, *bit);
-                    cout << boost::format("%s, %s: [%4d,%4d] -> %s [%9d]\n") %
-                                pit->str() %
-                                bit->str() %
-                                pit->colex() %
-                                bit->colex() %
-                                eval.str() %
-                                eval.high().code();
+                    cout << pit->str() << ", " << bit->str() << ": ["
+                         << setw(4) << pit->colex() << "," << setw(4) << bit->colex()
+                         << "] -> " << eval.str() << " [" << setw(9) << eval.high().code() << "]\n";
                 }
             }
     }

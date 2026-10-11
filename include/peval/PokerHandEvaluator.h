@@ -7,7 +7,6 @@
 
 #include <peval/CardSet.h>
 #include <peval/PokerHandEvaluation.h>
-#include <boost/lexical_cast.hpp>
 #include <memory>
 #include <string>
 #include <vector>
@@ -39,14 +38,7 @@ struct EquityResult
         return *this;
     }
 
-    std::string str() const
-    {
-        std::string ret = boost::lexical_cast<std::string>(winShares) + " " +
-                          boost::lexical_cast<std::string>(tieShares) + " " +
-                          boost::lexical_cast<std::string>(equity) + " " +
-                          boost::lexical_cast<std::string>(equity2);
-        return ret;
-    }
+    std::string str() const;
 
     double shares() {
         return winShares + tieShares;

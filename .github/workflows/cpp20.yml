@@ -45,16 +45,20 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt-get update && sudo apt-get install -y cmake libboost-dev
+      - run: sudo apt-get update && sudo apt-get install -y cmake
       - name: Build only the core without tests or apps
         run: |
-          cmake --preset core
+          cmake --preset core -DCMAKE_DISABLE_FIND_PACKAGE_Boost=ON
           cmake --build --preset core --parallel 2
+          cmake --install build/core --prefix "$RUNNER_TEMP/core"
+          cmake -S examples/cmake-consumer -B build/core-consumer -DCMAKE_PREFIX_PATH="$RUNNER_TEMP/core" -DCMAKE_DISABLE_FIND_PACKAGE_Boost=ON
+          cmake --build build/core-consumer --parallel 2
+          ctest --test-dir build/core-consumer --output-on-failure
   sanitizers:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - run: sudo apt-get update && sudo apt-get install -y cmake libboost-dev
+      - run: sudo apt-get update && sudo apt-get install -y cmake
       - name: Build and test with ASan and UBSan
         run: |
           cmake -S . -B build/sanitizers -DCMAKE_BUILD_TYPE=Debug -DMODERN_POKERSTOVE_BUILD_APPS=OFF -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
@@ -67,7 +71,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: sudo apt-get update && sudo apt-get install -y cmake swig libboost-dev
+      - run: sudo apt-get update && sudo apt-get install -y cmake swig
       - name: Build bindings and run smoke tests
         run: |
           cmake --preset python

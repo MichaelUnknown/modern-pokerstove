@@ -4,7 +4,8 @@
  */
 #include <memory>
 #include <stdexcept>
-#include <boost/algorithm/string.hpp>
+#include <algorithm>
+#include <locale>
 #include <peval/HoldemHandEvaluator.h>
 #include <peval/StudHandEvaluator.h>
 #include <peval/RazzHandEvaluator.h>
@@ -20,13 +21,16 @@
 #include <peval/UniversalHandEvaluator.h>
 
 using namespace std;
-using namespace boost;
 using namespace pokerstove;
 
 std::shared_ptr<PokerHandEvaluator> PokerHandEvaluator::alloc (const string & input)
 {
+  if (input.empty())
+    return nullptr;
   string strid = input;
-  boost::algorithm::to_lower(strid); // modifies str
+  const std::locale locale;
+  std::transform(strid.begin(), strid.end(), strid.begin(),
+                 [&locale](char c) { return std::tolower(c, locale); });
   std::shared_ptr<PokerHandEvaluator> ret = nullptr;
   switch (strid[0])
     {
@@ -114,7 +118,8 @@ std::shared_ptr<PokerHandEvaluator> PokerHandEvaluator::alloc (const string & in
       return ret;
     }
 
-  ret->_subclassID = strid;
+  if (ret)
+    ret->_subclassID = strid;
 
   return ret;
 }

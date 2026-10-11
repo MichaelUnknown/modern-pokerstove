@@ -21,8 +21,7 @@ if(BUILD_WHEEL OR BUILD_PYTHON)
 endif()
 include(CTest)
 
-# Core headers still use Boost; compiled Program_options is only needed by apps.
-find_package(Boost 1.71 CONFIG REQUIRED)
+# Only command-line parsing needs Boost; core targets have no Boost dependency.
 if(MODERN_POKERSTOVE_BUILD_APPS)
     find_package(Boost 1.71 CONFIG REQUIRED COMPONENTS program_options)
 endif()
@@ -35,7 +34,6 @@ function(pokerstove_configure_library target)
     target_include_directories(${target} PUBLIC
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-    target_link_libraries(${target} PUBLIC Boost::headers)
 endfunction()
 
 if(BUILD_TESTING)

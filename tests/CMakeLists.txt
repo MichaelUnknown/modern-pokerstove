@@ -22,6 +22,7 @@ pokerstove_add_tests(peval peval TestPeval
 )
 
 pokerstove_add_tests(penum penum TestPenum
+    penum/card_distribution_test.cpp
     penum/PartitionEnumerator_test.cpp
     penum/SimpleDeck_test.cpp
 )

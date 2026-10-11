@@ -7,7 +7,7 @@
 
 #include <cstdint>
 #include <vector>
-#include <boost/lexical_cast.hpp>
+#include <string>
 #include <util/combinations.h>
 
 namespace pokerstove
@@ -79,8 +79,8 @@ public:
             ret += (p ? " {" : "{");
             for (size_t i = 0; i < partSize(p); i++)
             {
-                int el = boost::lexical_cast<int>(getIndex(p, i));
-                ret += (i ? " " : "") + boost::lexical_cast<std::string>(el);
+                const auto el = getIndex(p, i);
+                ret += (i ? " " : "") + std::to_string(el);
             }
             ret += "}";
         }
@@ -98,8 +98,8 @@ public:
             ret += (p ? " {" : "{");
             for (size_t i = 0; i < partSize(p); i++)
             {
-                int el = boost::lexical_cast<int>(get(p, i));
-                ret += (i ? " " : "") + boost::lexical_cast<std::string>(el);
+                const auto el = get(p, i);
+                ret += (i ? " " : "") + std::to_string(el);
             }
             if (partSize(p) == 0)
                 ret += "e";

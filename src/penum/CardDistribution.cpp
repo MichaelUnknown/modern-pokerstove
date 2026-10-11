@@ -3,9 +3,11 @@
  */
 #include <penum/CardDistribution.h>
 
-#include <boost/algorithm/string.hpp>
-#include <boost/format.hpp>
-#include <boost/lexical_cast.hpp>
+#include <charconv>
+#include <cmath>
+#include <iomanip>
+#include <sstream>
+#include <string_view>
 #include <iostream>
 #include <vector>
 #include <peval/Card.h>
@@ -47,13 +49,13 @@ size_t CardDistribution::size() const
 
 string CardDistribution::str() const
 {
-    string ret;
+    ostringstream stream;
+    stream << fixed << setprecision(3);
     for (size_t i = 0; i < _handList.size(); i++) {
         const CardSet& hand = _handList[i];
-        ret += (i > 0 ? "," : "")
-            + (boost::format("%s=%.3f") % hand.str() % weight(hand)).str();
+        stream << (i > 0 ? "," : "") << hand.str() << "=" << weight(hand);
     }
-    return ret;
+    return stream.str();
 }
 
 void CardDistribution::clear()
@@ -121,54 +123,56 @@ const double& CardDistribution::weight(const CardSet& hand) const
 
 bool CardDistribution::parse(const std::string& input)
 {
-    clear();
-
-    // trap the special "unrealized/empty" distribution which
-    // has no specific cards, and is equivalent to a "random" dist
-    // TODO: verify that this is the internal representation we want for a
-    // random hand
+    CardDistribution parsed;
     if (input == ".") {
-        CardSet hand;
-        if (hand.size() != 0)
-            return false;
-        _weights[hand] = 1.0;
-        _handList.push_back(hand);
+        _handList.swap(parsed._handList);
+        _weights.swap(parsed._weights);
         return true;
     }
+    parsed.clear();
 
-    vector<string> hands;
-    boost::split(hands, input, boost::is_any_of(","));
-    for (const string& h : hands) {
-        // handle the weight
+    // Parse decimal/scientific weights without whitespace or locale dependence.
+    // Preserve the optional leading '+' accepted by lexical_cast.
+    std::string_view remaining(input);
+    while (true) {
+        const auto comma = remaining.find(',');
+        const auto entry = remaining.substr(0, comma);
+        const auto equals = entry.find('=');
         double weight = 1.0;
-        if (boost::contains(h, "=")) {
-            // trap for the case where the input ends with "="
-            string::size_type weightPos = h.rfind("=") + 1;
-            if (weightPos == h.size())
+        if (equals != std::string_view::npos) {
+            auto text = entry.substr(equals + 1);
+            if (!text.empty() && text.front() == '+') {
+                text.remove_prefix(1);
+                if (!text.empty() && text.front() == '-')
+                    return false;
+            }
+            if (text.empty())
                 return false;
-            weight = boost::lexical_cast<double>(h.substr(weightPos));
+            const auto result = std::from_chars(text.data(), text.data() + text.size(),
+                                                weight, std::chars_format::general);
+            if (result.ec != std::errc{} || result.ptr != text.data() + text.size() ||
+                !std::isfinite(weight) || weight < 0.0)
+                return false;
         }
 
-        // handle the hand one card at a time.
-        string handstr = h.substr(0, h.rfind("="));
-        if (handstr.size() % 2 != 0)
+        const auto handstr = entry.substr(0, equals);
+        if (handstr.empty() || handstr.size() % 2 != 0)
             return false;
         CardSet hand;
         for (size_t i = 0; i < handstr.size(); i += 2) {
-            Card c;
-            if (!c.fromString(handstr.substr(i, i + 2)))
+            Card card;
+            if (!card.fromString(std::string(handstr.substr(i, 2))) || hand.contains(card))
                 return false;
-            if (hand.contains(c))
-                return false;
-            hand.insert(c);
+            hand.insert(card);
         }
-
-        // final check and
-        if (hand.size() == 0)
-            return false;
-        _weights[hand] = weight;
-        _handList.push_back(hand);
+        parsed._weights[hand] = weight;
+        parsed._handList.push_back(hand);
+        if (comma == std::string_view::npos)
+            break;
+        remaining.remove_prefix(comma + 1);
     }
+    _handList.swap(parsed._handList);
+    _weights.swap(parsed._weights);
     return true;
 }
 
