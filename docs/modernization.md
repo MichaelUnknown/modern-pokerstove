@@ -87,6 +87,19 @@
   Core, Python packaging and installed C++ consumers acquire no CLI dependency.
 - Historical android/win32 artifacts and modernization history are preserved.
 
+## Step 4: CPM dependencies and PackageProject installation (implemented)
+
+- Replace the previous CMake files, presets, and manual export templates with
+  focused modules under cmake/ and a target-based C++20 root build.
+- Remove third_party/; acquire optional cxxopts and GoogleTest via CPM.cmake.
+  Preserve their versions and pin immutable commits. Pin and checksum the CPM
+  bootstrap, and acquire PackageProject.cmake at a fixed revision.
+- Generate peval, penum, and aggregate pokerstove packages with PackageProject.
+  Preserve public component include paths and exported target names. Installed
+  consumers do not acquire build dependencies.
+- Update CI, documentation and wheel packaging; remove legacy Python switches.
+  The first configure needs network access or a populated CPM source cache.
+
 ## Next steps
 
 These are separate changes, not prerequisites for using the C++20 build:

@@ -15,34 +15,27 @@ a poker hand evaluation and equity enumeration library.
   floating-point `std::from_chars`.
   Baseline toolchains: GCC 11+, Clang 14+ with a C++20 standard library,
   or Visual Studio 2022 (MSVC 19.30+).
-- CLI tools use bundled cxxopts 3.3.1; no system installation is needed.
+- Git and network access for the first configure (or a populated CPM source cache).
+- CPM.cmake 0.43.2 acquires PackageProject.cmake 1.13.0, optional cxxopts 3.3.1
+  and GoogleTest 1.14.0 at pinned upstream commits; no system installation is needed.
 - Python bindings additionally require SWIG 4.0+ and Python 3 development headers.
 
 The project has no Boost dependency. Binomial counts use
 exact, checked integer arithmetic; numeric parsing uses `std::from_chars`, and
-formatting uses standard strings/streams. GoogleTest is bundled and built only
-when tests are enabled. No dependencies are fetched at configure time.
+formatting uses standard strings/streams. GoogleTest is downloaded and built only
+when tests are enabled. PackageProject.cmake generates installable CMake packages.
 
 On Debian/Ubuntu, a default development build needs:
 
 ```sh
-sudo apt-get install cmake g++
+sudo apt-get install cmake g++ git
 ```
 
 On macOS and Windows, install a C++20-capable toolchain and CMake; the standard
-library must support floating-point `std::from_chars`. The CLI parser is bundled
-with its MIT license, and optional tests use bundled GoogleTest.
+library must support floating-point `std::from_chars`. The CLI parser
+is acquired with its MIT license, and optional tests use GoogleTest.
 
 ## Build and test
-
-```sh
-cmake --preset release
-cmake --build --preset release --parallel
-ctest --preset release
-```
-
-A `debug` preset is also provided. Both enable CLI tools and tests. Equivalent
-commands without presets:
 
 ```sh
 cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release
@@ -59,16 +52,37 @@ build/release/bin/ps-eval AcAs KhKd --board 2c3d4h5s9c
 
 | CMake option | Default | Purpose |
 | --- | --- | --- |
-| `MODERN_POKERSTOVE_BUILD_APPS` | ON | Build CLI tools using bundled cxxopts. |
+| `MODERN_POKERSTOVE_BUILD_APPS` | ON | Build CLI tools using cxxopts. |
 | `BUILD_TESTING` | ON | Build and register GoogleTest tests. |
 | `MODERN_POKERSTOVE_BUILD_PYTHON` | OFF | Build SWIG/Python bindings. |
 | `BUILD_SHARED_LIBS` | OFF | Build shared rather than static core libraries. |
-| `BUILD_PYTHON` | OFF | Compatibility switch enabling Python bindings. |
-| `BUILD_WHEEL` | OFF | Enable Python bindings; apps/tests default to OFF. |
 
-For just the core, use `cmake --preset core`, then build that preset. No Python,
-SWIG, GoogleTest, or Boost is required. For a shared-library
-build, use the `shared` preset.
+Apps and tests default to OFF when this project is included with
+`add_subdirectory`; Python bindings always default to OFF. For just the core:
+
+```sh
+cmake -S . -B build/core -DCMAKE_BUILD_TYPE=Release \
+  -DMODERN_POKERSTOVE_BUILD_APPS=OFF -DBUILD_TESTING=OFF
+cmake --build build/core --parallel
+```
+
+For shared libraries, set `-DBUILD_SHARED_LIBS=ON`. A Debug build uses
+`-DCMAKE_BUILD_TYPE=Debug`. The previous presets and legacy `BUILD_PYTHON` /
+`BUILD_WHEEL` switches have been removed; enable Python with the option above.
+
+To share downloaded sources between builds, configure an absolute cache path:
+
+```sh
+export CPM_SOURCE_CACHE="$HOME/.cache/modern-pokerstove/cpm"
+```
+
+The bootstrap checks CPM's SHA256 and caches it alongside dependency sources.
+The first configure downloads enabled dependencies; subsequent configurations
+reuse the cache, including offline builds after it is fully populated. CPM also
+supports local source overrides such as `-DCPM_cxxopts_SOURCE=/path/to/cxxopts`.
+Never commit the cache. Dependency versions and licenses are recorded in
+`cmake/dependencies.cmake` and the upstream sources (CPM/PackageProject/cxxopts:
+MIT; GoogleTest: BSD-3-Clause).
 
 ## CLI compatibility
 
@@ -86,7 +100,11 @@ The usual `--` separator ends option parsing. Scalar options may appear only onc
 cmake --install build/release --prefix /path/to/prefix
 ```
 
-The package exports `pokerstove::peval` and `pokerstove::penum`. A consumer uses:
+PackageProject generates `peval`, `penum`, and the aggregate `pokerstove` package.
+The aggregate imports `pokerstove::peval` and `pokerstove::penum` and also offers
+`pokerstove::pokerstove` for both libraries. Component packages can be used with
+`find_package(peval 1.2 CONFIG REQUIRED)` or `find_package(penum 1.2 CONFIG REQUIRED)`.
+Installed consumers need no CPM or downloaded build dependencies. A consumer uses:
 
 ```cmake
 find_package(pokerstove 1.2 CONFIG REQUIRED)
@@ -106,7 +124,7 @@ The C++ namespace `pokerstove` and exported target names remain unchanged.
 
 Public headers live in `include/{peval,penum,util}`; implementations and private
 headers in `src/`; CLI tools in `apps/`; component tests in `tests/`; Python
-bindings in `bindings/python/`; vendored GoogleTest in `third_party/googletest/`.
+bindings in `bindings/python/`; build and dependency modules in `cmake/`.
 Documentation is in `docs/`, and installed API examples in `examples/`.
 See [AGENTS.md](AGENTS.md) for directory responsibilities and guidelines.
 Only `include/` is installed as the C++ header tree. Odometer and the unused
@@ -119,14 +137,15 @@ implementation refactor.
 Install SWIG and development headers, then:
 
 ```sh
-cmake --preset python
-cmake --build --preset python --parallel
-ctest --preset python
+cmake -S . -B build/python -DCMAKE_BUILD_TYPE=Release \
+  -DMODERN_POKERSTOVE_BUILD_PYTHON=ON -DMODERN_POKERSTOVE_BUILD_APPS=OFF
+cmake --build build/python --parallel
+ctest --test-dir build/python --output-on-failure
 PYTHONPATH=build/python/python python3 -c 'import pokerstove; print(pokerstove.CardSet("AcAs"))'
 ```
 
 The build-tree package is under `build/python/python/pokerstove/`; generated
-wrappers stay out of the source tree. The Python preset disables CLI tools.
+wrappers stay out of the source tree. This configuration disables CLI tools.
 On Unix, the extension may use shared core libraries for a build-tree workflow;
 for a portable wheel, packaging explicitly builds static core libraries.
 
