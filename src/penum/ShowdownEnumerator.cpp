@@ -3,6 +3,8 @@
  */
 #include <penum/ShowdownEnumerator.h>
 
+#include <cassert>
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -95,7 +97,7 @@ vector<EquityResult> ShowdownEnumerator::calculateEquity(const vector<CardDistri
             {
                 // we use memcpy here for a little speed bonus
 		        // NOTE: this could break subclass semantics
-                memcpy((void*)copydest, copysrc, ncopy);
+                std::memcpy((void*)copydest, copysrc, ncopy);
                 for (size_t p = 0; p < ndists + nboards; p++)
                     ehands[p] |= deck.peek(pe.getMask(p));
 

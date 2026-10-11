@@ -49,7 +49,9 @@ public:
 
     /**
      * Printing and parseing.
-     * default implementations of these are trivial and support only raw cards
+     * Default parsing accepts comma-separated raw hands with optional finite,
+     * nonnegative decimal/scientific weights (ASCII decimal point). Failure
+     * returns false and preserves the previous distribution.
      */
     virtual bool parse(const std::string& input);  //!< parses according to distribution type
 

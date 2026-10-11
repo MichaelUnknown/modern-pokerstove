@@ -1,6 +1,4 @@
 @PACKAGE_INIT@
 
-include(CMakeFindDependencyMacro)
-find_dependency(Boost 1.71 CONFIG)
 include("${CMAKE_CURRENT_LIST_DIR}/pokerstoveTargets.cmake")
 check_required_components(pokerstove)

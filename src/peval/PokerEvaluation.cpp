@@ -5,7 +5,10 @@
 #include <peval/PokerEvaluation.h>
 #include <peval/Card.h>
 #include <peval/PokerEvaluationTables.h>
-#include <boost/format.hpp>
+#include <algorithm>
+#include <vector>
+#include <iomanip>
+#include <sstream>
 #include <iostream>
 #include <util/lastbit.h>
 #include <stdexcept>
@@ -483,7 +486,8 @@ string PokerEvaluation::toStringCannon() const
     }
 
     string ranks = topr + botr + kick;
-    ret = (boost::format("%s %-5s") % hand % ranks).str();
+    ranks.append(ranks.size() < 5 ? 5 - ranks.size() : 0, ' ');
+    ret = hand + " " + ranks;
 
     return ret;
 }
@@ -597,7 +601,8 @@ string PokerEvaluation::toStringPretty() const
     }
 
     string ranks = topr + botr + kick;
-    ret = (boost::format("%s%-5s") % hand % ranks).str();
+    ranks.append(ranks.size() < 5 ? 5 - ranks.size() : 0, ' ');
+    ret = hand + ranks;
 
     return ret;
 }
@@ -626,7 +631,9 @@ void PokerEvaluation::generateLowballLookupA5()
             if (nbits == 5)
                 break;
         }
-        cout << boost::format("    %6d, // %s\n") % lowbits % toBitString(lowbits);
+        ostringstream line;
+        line << "    " << setw(6) << lowbits << ", // " << toBitString(lowbits) << '\n';
+        cout << line.str();
     }
     cout << "};\n";
 }
@@ -647,7 +654,9 @@ void PokerEvaluation::generateBottomRankMask()
                 break;
             }
         }
-        cout << boost::format("    %6d, // %s\n") % lowbits % toBitString(lowbits);
+        ostringstream line;
+        line << "    " << setw(6) << lowbits << ", // " << toBitString(lowbits) << '\n';
+        cout << line.str();
     }
     cout << "};\n";
 }

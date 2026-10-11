@@ -4,10 +4,20 @@
  */
 #include <peval/PokerHandEvaluator.h>
 #include <iostream>
+#include <iomanip>
+#include <limits>
+#include <sstream>
 
 using namespace std;
-using namespace boost;
 using namespace pokerstove;
+
+std::string EquityResult::str() const
+{
+    std::ostringstream stream;
+    stream << std::setprecision(std::numeric_limits<double>::max_digits10)
+           << winShares << " " << tieShares << " " << equity << " " << equity2;
+    return stream.str();
+}
 
 PokerHandEvaluator::PokerHandEvaluator()
     : _subclassID("abstract-base-class")

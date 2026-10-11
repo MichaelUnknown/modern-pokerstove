@@ -11,27 +11,28 @@ a poker hand evaluation and equity enumeration library.
 ## Requirements
 
 - CMake 3.24 or newer.
-- A compiler and standard library supporting C++20, including `<bit>`.
+- A compiler and standard library supporting C++20, including `<bit>` and
+  floating-point `std::from_chars`.
   Baseline toolchains: GCC 11+, Clang 14+ with a C++20 standard library,
   or Visual Studio 2022 (MSVC 19.30+).
-- Boost 1.71+ headers. CLI tools also require Boost.Program_options.
+- Boost 1.71+ with Program_options, only when building CLI tools.
 - Python bindings additionally require SWIG 4.0+ and Python 3 development headers.
 
-The core still uses Boost for parsing and formatting. Binomial counts now use exact, checked integer
-arithmetic from the standard library. It does
-not need compiled Boost libraries when CLI tools are disabled. GoogleTest is
-bundled and is built only when tests are enabled. No dependencies are fetched
-at configure time.
+The core and Python bindings have no Boost dependency. Binomial counts use
+exact, checked integer arithmetic; numeric parsing uses `std::from_chars`, and
+formatting uses standard strings/streams. GoogleTest is bundled and built only
+when tests are enabled. No dependencies are fetched at configure time.
 
 On Debian/Ubuntu, a default development build needs:
 
 ```sh
-sudo apt-get install cmake g++ libboost-dev libboost-program-options-dev
+sudo apt-get install cmake g++ libboost-program-options-dev
 ```
 
-On macOS, install a C++20-capable Xcode toolchain, CMake, and Boost (for example
-through Homebrew). On Windows, use a compatible Boost installation and pass its
-prefix through `CMAKE_PREFIX_PATH` if CMake cannot locate it automatically.
+On macOS, install a C++20-capable toolchain and CMake; its standard library must
+support floating-point `std::from_chars`. Boost is needed only for CLI tools
+(for example through Homebrew). On Windows, use a compatible Boost installation
+for CLI tools and pass its prefix through `CMAKE_PREFIX_PATH` if necessary.
 
 ## Build and test
 
@@ -67,7 +68,7 @@ build/release/bin/ps-eval AcAs KhKd --board 2c3d4h5s9c
 | `BUILD_WHEEL` | OFF | Enable Python bindings; apps/tests default to OFF. |
 
 For just the core, use `cmake --preset core`, then build that preset. No Python,
-SWIG, GoogleTest, or compiled Boost library is required. For a shared-library
+SWIG, GoogleTest, or Boost is required. For a shared-library
 build, use the `shared` preset.
 
 ## Install and consume the C++ libraries
@@ -84,8 +85,8 @@ target_link_libraries(my_application PRIVATE pokerstove::penum)
 ```
 
 This propagates C++20, include paths, and transitive dependencies. Configure the
-consumer with `-DCMAKE_PREFIX_PATH=/path/to/prefix`; also make the Boost headers
-available. See `examples/cmake-consumer` for a complete example.
+consumer with `-DCMAKE_PREFIX_PATH=/path/to/prefix`. See
+`examples/cmake-consumer` for a complete example.
 
 Public headers now use component paths such as `<peval/CardSet.h>` and
 `<penum/ShowdownEnumerator.h>`. This intentionally changes the previous
@@ -130,6 +131,16 @@ python3 -m pip install dist/pokerstove-*.whl
 The packaging backend installs only the `python` component, including the
 extension, wrapper, and package initializer. C++ headers and CLI tools are not
 included in the wheel.
+
+## Distribution parsing
+
+`CardDistribution::parse` accepts comma-separated raw hands with optional
+nonnegative, finite decimal/scientific weights, such as
+`AcAs=+0.125,KhKd=1e-3`. Numeric syntax uses an ASCII decimal point and requires
+complete consumption without whitespace. Invalid syntax, nonfinite/negative
+weights, and numeric overflow/underflow return `false` and preserve the previous
+distribution. `.` represents the random distribution. Duplicate range-entry
+semantics remain unchanged and will be addressed separately.
 
 ## Migration and validation
 

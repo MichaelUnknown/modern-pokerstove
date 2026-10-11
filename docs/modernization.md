@@ -45,21 +45,40 @@
   spacing and existing error messages. Remove unused Boost includes in CardSet.
 - Replace assertion-free timing loops with known counts, an independent Pascal
   triangle reference, overflow tests, text checks, and Colex regression tests.
-- Boost remains required for other public/core parsing and floating-point text,
-  and for CLI Program_options. No speedup is claimed for this change.
+- This was the first part of the dependency migration; Step 3b below completes
+  core parsing and formatting. No speedup is claimed.
+
+## Step 3b: Core without Boost (implemented)
+
+- Replace weighted distribution numeric parsing with checked floating-point
+  `std::from_chars`, preserving optional leading plus, decimal/scientific input,
+  default weights, and the random distribution marker.
+- Invalid, nonfinite, negative, out-of-range, or partially parsed weights return
+  false rather than leaking Boost exceptions. Parsing is transactional: failure
+  preserves the previous distribution. Numeric syntax is locale-independent.
+- Replace comma splitting/substring searches with string_view, and parse each
+  card from exactly two characters. Duplicate range semantics remain unchanged.
+- Preserve distribution fixed-three-digit text, equity max_digits10 precision,
+  evaluation padding, CLI table widths, and lookup-generator text using standard
+  strings and streams. Formatting still uses the current locale.
+- Replace factory case conversion with standard locale-aware transformation;
+  empty/unsupported identifiers safely return nullptr. Existing game selection
+  rules (including upstream o5/o6 and T issues) remain for separate fixes.
+- Replace the unused internal Boost timer helper with a steady_clock sample.
+- Remove Boost from core target exports, installed package discovery, public
+  headers, Python builds and CI core requirements. Only CLI Program_options
+  remains; there is no equivalent parser in the C++20 standard library.
+- Floating-point from_chars support is required from the compiler's standard
+  library; std::format is not required. No performance claim is made.
 
 ## Next steps
 
 These are separate changes, not prerequisites for using the C++20 build:
 
-1. Remove remaining Boost utilities incrementally. Next address checked standard
-   numeric parsing and compatible formatting; exact integer combinatorics is implemented.
-   Keep CLI parsing and tests independently scoped. Verify parsing and output
-   semantics before replacing them.
-2. Fix upstream correctness issues in separate tested changes: split-pot tie
+1. Fix upstream correctness issues in separate tested changes: split-pot tie
    bounds, A-5 paired-hand evaluation, normalization, evaluator selection,
    card removal, duplicate range handling, and invalid input validation.
-3. Add reproducible benchmarks, then optimize allocation, subset caching,
+2. Add reproducible benchmarks, then optimize allocation, subset caching,
    collision pruning, and random-hand enumeration based on measurements.
 
 C++20 compilation alone does not fix the upstream poker correctness issues.

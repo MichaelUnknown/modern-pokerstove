@@ -1,4 +1,3 @@
-#include <boost/format.hpp>
 #include <boost/program_options.hpp>
 #include <iostream>
 #include <peval/Card.h>
@@ -80,13 +79,13 @@ int main(int argc, char** argv)
         if (vm.count("ranks") > 0)
         {
             for (auto it = rankHands.begin(); it != rankHands.end(); it++)
-                cout << boost::format("%s: %d\n") % it->first % it->second;
+                cout << it->first << ": " << it->second << '\n';
         }
         else
         {
             for (auto it = canonicalHands.begin(); it != canonicalHands.end();
                  it++)
-                cout << boost::format("%s: %d\n") % it->str() % it->colex();
+                cout << it->str() << ": " << it->colex() << '\n';
         }
     }
     catch (std::exception& e)
