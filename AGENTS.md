@@ -20,17 +20,20 @@ features already implemented.
 Modernize incrementally. Do not restructure the repository or remove
 dependencies as a side effect of an unrelated fix. For an intentional move,
 update CMake, includes, installation/export rules, Python packaging, CI,
-and documentation together. Preserve public include paths such as
-<pokerstove/peval/CardSet.h> and existing target names unless the task explicitly
-changes the public API. Prefer a separate move-only change before behavior changes.
+and documentation together. The target layout intentionally changes public
+include paths from <pokerstove/peval/CardSet.h> to <peval/CardSet.h> (and likewise
+for penum and public utilities). Update all consumers, examples, bindings, and
+installation rules in that migration and document the source compatibility break.
+Keep the C++ namespace pokerstove and existing target names unless the task
+explicitly changes them. Prefer a separate move-only change before behavior changes.
 
 ## Target directory layout
 
 | Path | Responsibility |
 | --- | --- |
-| include/pokerstove/peval/ | Installed public evaluation headers. |
-| include/pokerstove/penum/ | Installed public distribution and enumeration headers. |
-| include/pokerstove/util/ | Utilities that are intentionally part of the public API. |
+| include/peval/ | Installed public evaluation headers. |
+| include/penum/ | Installed public distribution and enumeration headers. |
+| include/util/ | Utilities that are intentionally part of the public API. |
 | src/peval/ | Evaluation implementation and private headers/tables. |
 | src/penum/ | Distribution and enumeration implementation. |
 | src/util/ | Internal shared utilities; keep this small and cohesive. |
@@ -52,7 +55,12 @@ Create directories only when they contain useful content.
 
 Public headers must be self-contained. Private headers and generated evaluation
 tables belong with their implementation unless consumers actually need them.
-Do not expose vendor headers through the public API.
+Do not expose vendor headers through the public API. Public includes use component
+paths such as <peval/CardSet.h> and <penum/ShowdownEnumerator.h>; configure the
+build and installation include root accordingly and preserve those component
+subdirectories when installing headers. Do not add a pokerstove/ directory to
+the target include tree. Keep utilities private unless consumers need them;
+minimize public headers under the generic util/ path.
 
 Use .cpp for implementations and .h for new headers to match the existing API;
 do not mix extensions or rename existing headers without a specific reason.
