@@ -125,3 +125,16 @@ TEST(CardSetTest, fromColex)
     const CardSet result2 = CardSet::fromColex(4, 0);
     EXPECT_EQ(result2,  fourCardZero);
 }
+
+TEST(CardSetTest, SizeCountsEveryMaskBit)
+{
+    EXPECT_EQ(0, CardSet(uint64_t(0)).size());
+    for (size_t i = 0; i < STANDARD_DECK_SIZE; ++i)
+    {
+        EXPECT_EQ(1, CardSet(UINT64_C(1) << i).size());
+        EXPECT_EQ(i + 1, CardSet((UINT64_C(1) << (i + 1)) - 1).size());
+    }
+    CardSet deck;
+    deck.fill();
+    EXPECT_EQ(STANDARD_DECK_SIZE, deck.size());
+}

@@ -1,5 +1,13 @@
 #include "lastbit.h"
 #include <gtest/gtest.h>
+#include <limits>
+
+static_assert(firstbit(UINT64_C(0)) == 0);
+static_assert(firstbit(UINT64_C(1) << 63) == 63);
+static_assert(lastbit(uint16_t(0)) == 0);
+static_assert(lastbit(uint32_t(0)) == 0);
+static_assert(lastbit(uint64_t(0)) == 0);
+static_assert(lastbit64(UINT64_C(1) << 63) == 63);
 
 TEST(FirstBitTest, firstbit64)
 {
@@ -123,4 +131,13 @@ TEST(LastBit64Test, lastbit64)
                       lastbit64((UINT64_C(1) << i) | (UINT64_C(1) << (i + 2))));
         }
     }
+}
+
+TEST(BitBoundaryTest, allBitsSet)
+{
+    EXPECT_EQ(63, firstbit(std::numeric_limits<uint64_t>::max()));
+    EXPECT_EQ(0, lastbit(std::numeric_limits<uint16_t>::max()));
+    EXPECT_EQ(0, lastbit(std::numeric_limits<uint32_t>::max()));
+    EXPECT_EQ(0, lastbit(std::numeric_limits<uint64_t>::max()));
+    EXPECT_EQ(0, lastbit64(std::numeric_limits<uint64_t>::max()));
 }

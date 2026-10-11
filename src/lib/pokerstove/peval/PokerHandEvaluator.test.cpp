@@ -18,3 +18,16 @@ TEST(PokerHandEvaluator, InvalidGame)
     EXPECT_EQ(nullptr, evaluator);
 }
 
+
+TEST(PokerHandEvaluator, SupportedFactoryNames)
+{
+    using namespace pokerstove;
+    for (const char* game : {"h", "k", "l", "3", "o", "o8", "o/8", "omaha",
+                             "omaha/8", "o5", "o6", "o5/8", "o6/8", "r", "s",
+                             "q", "d", "t", "T", "e", "b"})
+    {
+        const auto evaluator = PokerHandEvaluator::alloc(game);
+        ASSERT_NE(nullptr, evaluator) << game;
+        EXPECT_GT(evaluator->handSize(), 0) << game;
+    }
+}

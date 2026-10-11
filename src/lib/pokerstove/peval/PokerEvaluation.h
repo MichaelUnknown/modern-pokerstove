@@ -7,7 +7,6 @@
 
 #include <iosfwd>
 #include <climits>
-#include <boost/operators.hpp>
 #include "Rank.h"
 
 namespace pokerstove
@@ -116,7 +115,6 @@ namespace pokerstove
      */
     int  kickerBits () const;
 
-    // boost/operators.hpp creates closure
     bool operator==(const PokerEvaluation& e) const { return _evalcode == e._evalcode; }
     bool operator!=(const PokerEvaluation& e) const { return _evalcode != e._evalcode; }
     bool operator<=(const PokerEvaluation& e) const { return _evalcode <= e._evalcode; }

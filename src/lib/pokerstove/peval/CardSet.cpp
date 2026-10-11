@@ -10,6 +10,7 @@
 #include "Suit.h"
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
@@ -132,12 +133,7 @@ size_t CardSet::countMaxSuit() const
 
 size_t CardSet::size() const
 {
-    uint64_t v = _cardmask;
-    size_t c;
-    for (c = 0; v; c++) {
-        v &= v - 1;  // clear the least significant bit set
-    }
-    return c;
+    return static_cast<size_t>(std::popcount(_cardmask));
 }
 
 void CardSet::fromString(const string& instr)
