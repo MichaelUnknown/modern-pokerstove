@@ -21,9 +21,9 @@ if(BUILD_WHEEL OR BUILD_PYTHON)
 endif()
 include(CTest)
 
-# Only command-line parsing needs Boost; core targets have no Boost dependency.
+# Header-only CLI parsing is needed only when applications are enabled.
 if(MODERN_POKERSTOVE_BUILD_APPS)
-    find_package(Boost 1.71 CONFIG REQUIRED COMPONENTS program_options)
+    add_subdirectory(third_party/cxxopts)
 endif()
 
 function(pokerstove_configure_library target)

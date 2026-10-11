@@ -71,6 +71,22 @@
 - Floating-point from_chars support is required from the compiler's standard
   library; std::format is not required. No performance claim is made.
 
+## Step 3c: cxxopts CLI parsing and complete Boost removal (implemented)
+
+- Replace Boost.Program_options in all three CLI tools with unchanged vendored
+  cxxopts 3.3.1, pinned by commit/header SHA with its MIT license.
+- Keep option names/defaults, positional hands, -- separator and the legacy -?
+  help alias. Help formatting/error wording now follow cxxopts; help/no-argument
+  invocation retains exit status 1. Repeated hands retain their original tokens,
+  including weighted comma-separated distributions and their order.
+- Reject unmatched/duplicate scalar arguments, unsafe card counts, missing hands,
+  invalid hand distributions and unsupported games with handled errors.
+- Link cxxopts privately to CLI targets only. Remove Boost discovery, linking
+  and installation requirements from all active CMake/CI configuration.
+- Cover CLI behavior with CTest integration tests, enabled only for apps+tests.
+  Core, Python packaging and installed C++ consumers acquire no CLI dependency.
+- Historical android/win32 artifacts and modernization history are preserved.
+
 ## Next steps
 
 These are separate changes, not prerequisites for using the C++20 build:

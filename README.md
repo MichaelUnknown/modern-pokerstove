@@ -15,10 +15,10 @@ a poker hand evaluation and equity enumeration library.
   floating-point `std::from_chars`.
   Baseline toolchains: GCC 11+, Clang 14+ with a C++20 standard library,
   or Visual Studio 2022 (MSVC 19.30+).
-- Boost 1.71+ with Program_options, only when building CLI tools.
+- CLI tools use bundled cxxopts 3.3.1; no system installation is needed.
 - Python bindings additionally require SWIG 4.0+ and Python 3 development headers.
 
-The core and Python bindings have no Boost dependency. Binomial counts use
+The project has no Boost dependency. Binomial counts use
 exact, checked integer arithmetic; numeric parsing uses `std::from_chars`, and
 formatting uses standard strings/streams. GoogleTest is bundled and built only
 when tests are enabled. No dependencies are fetched at configure time.
@@ -26,13 +26,12 @@ when tests are enabled. No dependencies are fetched at configure time.
 On Debian/Ubuntu, a default development build needs:
 
 ```sh
-sudo apt-get install cmake g++ libboost-program-options-dev
+sudo apt-get install cmake g++
 ```
 
-On macOS, install a C++20-capable toolchain and CMake; its standard library must
-support floating-point `std::from_chars`. Boost is needed only for CLI tools
-(for example through Homebrew). On Windows, use a compatible Boost installation
-for CLI tools and pass its prefix through `CMAKE_PREFIX_PATH` if necessary.
+On macOS and Windows, install a C++20-capable toolchain and CMake; the standard
+library must support floating-point `std::from_chars`. The CLI parser is bundled
+with its MIT license, and optional tests use bundled GoogleTest.
 
 ## Build and test
 
@@ -60,7 +59,7 @@ build/release/bin/ps-eval AcAs KhKd --board 2c3d4h5s9c
 
 | CMake option | Default | Purpose |
 | --- | --- | --- |
-| `MODERN_POKERSTOVE_BUILD_APPS` | ON | Build CLI tools; requires Boost.Program_options. |
+| `MODERN_POKERSTOVE_BUILD_APPS` | ON | Build CLI tools using bundled cxxopts. |
 | `BUILD_TESTING` | ON | Build and register GoogleTest tests. |
 | `MODERN_POKERSTOVE_BUILD_PYTHON` | OFF | Build SWIG/Python bindings. |
 | `BUILD_SHARED_LIBS` | OFF | Build shared rather than static core libraries. |
@@ -70,6 +69,16 @@ build/release/bin/ps-eval AcAs KhKd --board 2c3d4h5s9c
 For just the core, use `cmake --preset core`, then build that preset. No Python,
 SWIG, GoogleTest, or Boost is required. For a shared-library
 build, use the `shared` preset.
+
+## CLI compatibility
+
+Existing long/short option names, defaults and positional hands remain supported.
+`--help`, `-?`, and invocation without arguments print help and return status 1,
+matching the previous tools. `ps-eval -h` remains the hand option. cxxopts changes
+help/error wording; errors return status 1 rather than terminating uncaught.
+Repeated `--hand` arguments and mixed named/positional hands preserve their order.
+Commas within a hand argument remain distribution separators, not player splits.
+The usual `--` separator ends option parsing. Scalar options may appear only once.
 
 ## Install and consume the C++ libraries
 

@@ -18,12 +18,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install build dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake clang libboost-program-options-dev
+        run: sudo apt-get update && sudo apt-get install -y cmake clang
       - name: Configure
         run: >-
           cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release
           -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
           -DBUILD_SHARED_LIBS=${{ matrix.shared }}
+          -DCMAKE_DISABLE_FIND_PACKAGE_Boost=ON
       - name: Build and test
         run: |
           cmake --build build/release --parallel 2
@@ -31,6 +32,8 @@ jobs:
       - name: Install and test an external consumer
         run: |
           cmake --install build/release --prefix "$RUNNER_TEMP/pokerstove"
+          test -f "$RUNNER_TEMP/pokerstove/share/licenses/pokerstove/cxxopts/LICENSE"
+          test ! -e "$RUNNER_TEMP/pokerstove/include/cxxopts.hpp"
           test ! -e "$RUNNER_TEMP/pokerstove/include/pokerstove"
           test ! -e "$RUNNER_TEMP/pokerstove/include/penum/Odometer.h"
           test ! -e "$RUNNER_TEMP/pokerstove/include/util/timing.hpp"
